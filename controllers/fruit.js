@@ -9,7 +9,20 @@ const Fruit = require("../models/fruit.js"); // fruit model
 ///////////////////////////////////
 const router = express.Router()
 
-
+/////////////////////////////////////
+//Router Middleware
+/////////////////////////////////////
+//middleware to check if the user is logged in 
+router.use((req, res, next) => {
+  //check if logged in
+  if (req.session.loggedIn) {
+    //send to routes
+    next()
+  } else {
+    //if not logged in, redirect to the log in page
+    res.redirect("/user/login")
+  }
+})
 
 ///////////////////////////////////
 //Routes
@@ -47,15 +60,16 @@ router.get("/seed", (req, res) => {
 
 //Index route - get -/fruits
 
+// index route - get - /fruits
 router.get("/", (req, res) => {
-  //find all the fruits
-  Fruit.find({})
+    //find all the fruits
+    Fruit.find({username: req.session.username})
     .then((fruits) => {
-    //render the index template with the fruits
-      res.render("fruits/index.liquid",{fruits})
-  })
-  //error handeling
-  .catch((error)=>res.json({error}))
+        // render the index template with the fruits
+        res.render("fruits/index.liquid", {fruits})
+    })
+    // error handling
+    .catch((error) => {res.json({error})})
 })
 
 
@@ -64,22 +78,29 @@ router.get("/new", (req, res) => {
   res.render("fruits/new.liquid");
 });
 
+
+
 // create - post request - /fruits
 router.post("/", (req, res) => {
-  // convert the checkbox property to true or false
-  req.body.readyToEat = req.body.readyToEat === "on" ? true : false;
 
-  // create the new fruit
-  Fruit.create(req.body)
+    // convert the checkbox property to true or false
+    req.body.readyToEat = req.body.readyToEat === "on" ? true : false
+
+    // add the username to req.body, to track user
+    req.body.username = req.session.username
+
+    // create the new fruit
+    Fruit.create(req.body)
     .then((fruit) => {
-      // redirect the user back to the index route
-      res.redirect("/fruits");
+        // redirect the user back to the index route
+        res.redirect("/fruits")
     })
     // error handling
     .catch((error) => {
-      res.json({ error });
-    });
-});
+        res.json({error})
+    })
+
+})
 
 
 
